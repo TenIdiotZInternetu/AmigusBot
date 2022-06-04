@@ -1,4 +1,4 @@
-const Discord = require('discord.js')
+const APP = require("../appGlobals.js");
 
 module.exports = {
     name: "messageCreate",
@@ -11,8 +11,8 @@ module.exports = {
         const comArgs = message.content.slice(prefix.length).split(" ");
         const com = comArgs.shift().toLowerCase();
     
-        if (!(Object.keys(commands).includes(com))) commands['invalid'].execute(message);
-        else commands[com].execute(message, comArgs);
+        if (!(Object.keys(APP.commands).includes(com))) APP.commands['invalid'].execute(message);
+        else APP.commands[com].execute(message, comArgs);
     }
 
 }
