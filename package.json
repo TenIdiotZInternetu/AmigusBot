@@ -1,0 +1,16 @@
+{
+  "name": "amigus",
+  "version": "1.0.0",
+  "description": "SVK Tournament Scene Bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "TIZI",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^13.7.0",
+    "dotenv": "^16.0.1",
+    "node": "^16.14.2"
+  }
+}
