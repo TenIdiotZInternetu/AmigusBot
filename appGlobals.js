@@ -6,12 +6,11 @@ const partials = ["GUIld_MEMBER", "MESSAGE", "REACTION"];
 
 const client = new discord.Client({intents: intents, partials: partials});
 
-
 globals = {
     Discord: discord,
     Client: client,
-    Guild: null,
-    CommandManager: null,
+    Guild: null,            // Defined in index.js on ready
+    CommandManager: null,   // ^
 
     commands: {},
     events: {},
