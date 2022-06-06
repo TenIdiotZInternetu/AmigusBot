@@ -9,7 +9,7 @@ const client = new discord.Client({intents: intents, partials: partials});
 globals = {
     Discord: discord,
     Client: client,
-    Guild: null,            // Defined in index.js on ready
+    Guild: null,            // Defined in index.js once ready
     CommandManager: null,   // ^
 
     commands: {},
