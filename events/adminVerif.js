@@ -10,7 +10,9 @@ module.exports = {
 
     async execute(interaction, questionEmbed) {
         if (interaction.member.roles.cache.has(process.env.ADMIN_ROLE_ID)) resolve(true);
+        
 
+        // Interaction Creation -----------------------------------------------------------------------------------------------------------
         const embed = new Discord.MessageEmbed()
             .setThumbnail(process.env.KOKOT_MIGO)
             .setTitle("Your request has been sent for verification")
@@ -34,6 +36,8 @@ module.exports = {
         const verifChannel = APP.Client.channels.cache.get(process.env.VERIF_CHANNEL_ID);
         const verifMessage = await verifChannel.send({ embeds: [questionEmbed], components: [row] });
 
+
+        // Interaction Resolution --------------------------------------------------------------------------------------------------------
         const collector = verifMessage.createMessageComponentCollector({max: 1});
         let answer;
 

@@ -1,4 +1,5 @@
-const Discord = require('discord.js')
+const Discord = require('discord.js');
+const { createBrotliCompress } = require('zlib');
 const APP = require('../appGlobals.js')
 
 module.exports = {
@@ -31,7 +32,7 @@ module.exports = {
 
     async execute(interaction) {
         const tour = interaction.options.getString('title', true);
-        const abr = interaction.options.getString('abr', true);
+        const abr = interaction.options.getString('abr', true).toLowerCase();
         const members = interaction.options.getString('members', false);
         let memberIds = []
 
@@ -48,15 +49,30 @@ module.exports = {
             
 
         if (members) {
+            verifEmbed.addField("Team Members", members)
+
             for (const id of members.matchAll(/<@!(\d*)>/g)) {
                 memberIds.push(id[1])
             }
         }
-
         
         
         verif = await require('../events/adminVerif.js').execute(interaction, verifEmbed);
         if (!verif) return;
+
+        // Role Assignement ----------------------------------------------------------------------------------------------------
+        const newRole = await APP.Guild.roles.create({
+            name: abr.toUpperCase(),
+            position: 5,
+            mentionable: true,
+            color: Math.floor(Math.random() * (0xffffff + 1))
+        })
+
+        if (members) {
+            for (const id of memberIds) {
+                APP.Guild.members.cache.get(id).roles.add(newRole)
+            }
+        }
 
 
         // Room Creation -------------------------------------------------------------------------------------------------------
@@ -73,6 +89,9 @@ module.exports = {
         })
 
         APP.cachedChannels.set(category.id, catChannels);
+
+
+        
     }
 
     
