@@ -1,5 +1,4 @@
 const Discord = require('discord.js');
-const { createBrotliCompress } = require('zlib');
 const APP = require('../appGlobals.js')
 
 module.exports = {
@@ -34,7 +33,7 @@ module.exports = {
         const tour = interaction.options.getString('title', true);
         const abr = interaction.options.getString('abr', true).toLowerCase();
         const members = interaction.options.getString('members', false);
-        let memberIds = []
+        let memberIds = [];
 
         
         
@@ -46,31 +45,31 @@ module.exports = {
             .setColor('#24bdb8')
             .setTitle("Rooms request")
             .setDescription(`${tour} (${abr})`)
-            
 
         if (members) {
             verifEmbed.addField("Team Members", members)
 
             for (const id of members.matchAll(/<@!(\d*)>/g)) {
-                memberIds.push(id[1])
+                memberIds.push(id[1]);
             }
         }
         
-        
         verif = await require('../events/adminVerif.js').execute(interaction, verifEmbed);
         if (!verif) return;
+
 
         // Role Assignement ----------------------------------------------------------------------------------------------------
         const newRole = await APP.Guild.roles.create({
             name: abr.toUpperCase(),
             position: 5,
             mentionable: true,
-            color: Math.floor(Math.random() * (0xffffff + 1))
+            color: Math.floor(Math.random() * (0xffffff + 1)),
+            hoist: true
         })
 
         if (members) {
             for (const id of memberIds) {
-                APP.Guild.members.cache.get(id).roles.add(newRole)
+                APP.Guild.members.cache.get(id).roles.add(newRole);
             }
         }
 
@@ -79,20 +78,22 @@ module.exports = {
         const category = await interaction.guild.channels.create(tour, {type: 'GUILD_CATEGORY'});
         const catChannels = [];
 
-        ['announcements', 'links', 'general', 'scores', 'lobbies', 'voice'].forEach( title => {
+        ["announcements", "links", "general", "scores", "lobbies", "voice"].forEach( title => {
             let catType = 'GUILD_TEXT';
-            if (title == 'voice') catType = 'GUILD_VOICE';
+            let perms = new Discord.Permissions(1067365944896n);
+
+            if (title == "announcements" || title == "links") perms = new Discord.Permissions(66624n);
+            if (title == "voice") catType = 'GUILD_VOICE';
 
             interaction.guild.channels.create(`${abr}-${title}`, {parent: category, type: catType})
-                .then(chan => catChannels.push(chan.id))
+                .then(chan => {
+                    catChannels.push(chan.id);
+                    chan.permissionOverwrites.edit(newRole, perms.serialize());
+                    chan.permissionOverwrites.edit(APP.Guild.roles.everyone, new Discord.Permissions(0n).serialize());
+                })
                 .catch(err => console.error(err));
         })
 
         APP.cachedChannels.set(category.id, catChannels);
-
-
-        
     }
-
-    
 }
