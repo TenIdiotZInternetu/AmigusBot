@@ -1,4 +1,6 @@
 const Discord = require('discord.js')
+const APP = require('../appGlobals.js')
+
 
 module.exports = {
     name: "channelDelete",
@@ -6,14 +8,14 @@ module.exports = {
     once: false,
     async execute(channel) {
         if (!channel.type === 'GUILD_CATEGORY') return;
-        if (!global.cachedChannels.has(channel.id)) return;
+        if (!APP.cachedChannels.has(channel.id)) return;
 
-        global.cachedChannels.get(channel.id).forEach(childId => {
+        APP.cachedChannels.get(channel.id).forEach(childId => {
             channel.guild.channels.fetch(childId)
                 .then(child => child.delete())
                 .catch(err => console.error(err));
         });
 
-        cachedChannels.delete(channel.id);
+        APP.cachedChannels.delete(channel.id);
     }
 }

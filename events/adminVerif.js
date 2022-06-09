@@ -8,7 +8,7 @@ module.exports = {
     description: "Creates embed for actions requiring admin verification",
     once: false,
 
-    async execute(interaction) {
+    async execute(interaction, questionEmbed) {
         if (interaction.member.roles.cache.has(process.env.ADMIN_ROLE_ID)) resolve(true);
 
         const embed = new Discord.MessageEmbed()
@@ -31,31 +31,24 @@ module.exports = {
                     .setStyle('DANGER')
             )
 
-        const question = new Discord.MessageEmbed()
-            .setThumbnail(process.env.KOKOT_MIGO)
-            .setAuthor({name: interaction.member.user.username, iconURL: interaction.member.displayAvatarURL()}) 
-            .setURL(interaction.url)
-            .setColor('#24bdb8')
-            .setTitle("Rooms request")
-
         const verifChannel = APP.Client.channels.cache.get(process.env.VERIF_CHANNEL_ID);
-        await verifChannel.send({ embeds: [question], components: [row] });
+        const verifMessage = await verifChannel.send({ embeds: [questionEmbed], components: [row] });
 
-        const collector = verifChannel.createMessageComponentCollector({max: 1});
+        const collector = verifMessage.createMessageComponentCollector({max: 1});
         let answer;
 
-        answer = await new Promise(resolve => collector.once('collect', async bi => {
+        answer = await new Promise(resolve => collector.on('collect', async bi => {
             if (bi.customId === 'verifApprove') {
-                question.setTitle("Rooms request - APPROVED");
-                question.setColor('#3ba55c');
-                bi.update({ embeds: [question], components: []});
+                questionEmbed.setTitle("Rooms request - APPROVED");
+                questionEmbed.setColor('#3ba55c');
+                bi.update({ embeds: [questionEmbed], components: []});
                 resolve(true);
             }
 
             if (bi.customId === 'verifIgnore') {
-                question.setTitle("Rooms request - IGNORED");
-                question.setColor('#ed4245');
-                bi.update({ embeds: [question], components: []});
+                questionEmbed.setTitle("Rooms request - IGNORED");
+                questionEmbed.setColor('#ed4245');
+                bi.update({ embeds: [questionEmbed], components: []});
                 resolve(false);
             }
         }))

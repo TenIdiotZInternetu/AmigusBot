@@ -21,7 +21,7 @@ module.exports = {
                     required: true,
                 },{
                     name: "members",
-                    description: "Names of your teammates",
+                    description: "Names of your teammates, use @",
                     type: 'STRING',
                     required: false,
                 }
@@ -30,15 +30,36 @@ module.exports = {
     },
 
     async execute(interaction) {
-        const tour = interaction.options.getString('title', true)
-        const abr = interaction.options.getString('abr', true)
-        const members = interaction.options.getString('members', false)
+        const tour = interaction.options.getString('title', true);
+        const abr = interaction.options.getString('abr', true);
+        const members = interaction.options.getString('members', false);
+        let memberIds = []
 
-        console.log(members);
         
-        verif = await require('../events/adminVerif.js').execute(interaction);
+        
+        // Verification --------------------------------------------------------------------------------------------------------
+        const verifEmbed = new Discord.MessageEmbed()
+            .setThumbnail(process.env.KOKOT_MIGO)
+            .setAuthor({name: interaction.member.user.username, iconURL: interaction.member.displayAvatarURL()}) 
+            .setURL(interaction.url)
+            .setColor('#24bdb8')
+            .setTitle("Rooms request")
+            .setDescription(`${tour} (${abr})`)
+            
+
+        if (members) {
+            for (const id of members.matchAll(/<@!(\d*)>/g)) {
+                memberIds.push(id[1])
+            }
+        }
+
+        
+        
+        verif = await require('../events/adminVerif.js').execute(interaction, verifEmbed);
         if (!verif) return;
 
+
+        // Room Creation -------------------------------------------------------------------------------------------------------
         const category = await interaction.guild.channels.create(tour, {type: 'GUILD_CATEGORY'});
         const catChannels = [];
 
@@ -53,4 +74,6 @@ module.exports = {
 
         APP.cachedChannels.set(category.id, catChannels);
     }
+
+    
 }
