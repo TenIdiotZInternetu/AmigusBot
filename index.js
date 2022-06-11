@@ -28,3 +28,5 @@ APP.Client.once('ready', () => {
 });
 
 APP.Client.login(process.env.TOKEN)
+APP.MongoClient.connect()
+    .then(client => APP.MongoDB = client.db('SVK_Tournament_Scene'));

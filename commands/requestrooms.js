@@ -78,22 +78,29 @@ module.exports = {
         const category = await interaction.guild.channels.create(tour, {type: 'GUILD_CATEGORY'});
         const catChannels = [];
 
-        ["announcements", "links", "general", "scores", "lobbies", "voice"].forEach( title => {
-            let catType = 'GUILD_TEXT';
+        
+        for (const title of ["announcements", "links", "general", "scores", "lobbies", "voice"]) {
+            let chanType = 'GUILD_TEXT';
             let perms = new Discord.Permissions(1067365944896n);
 
             if (title == "announcements" || title == "links") perms = new Discord.Permissions(66624n);
-            if (title == "voice") catType = 'GUILD_VOICE';
+            if (title == "voice") chanType = 'GUILD_VOICE';
 
-            interaction.guild.channels.create(`${abr}-${title}`, {parent: category, type: catType})
+            await interaction.guild.channels.create(`${abr}-${title}`, {parent: category, type: chanType})
                 .then(chan => {
                     catChannels.push(chan.id);
                     chan.permissionOverwrites.edit(newRole, perms.serialize());
                     chan.permissionOverwrites.edit(APP.Guild.roles.everyone, new Discord.Permissions(0n).serialize());
                 })
                 .catch(err => console.error(err));
-        })
+                
+        }
 
         APP.cachedChannels.set(category.id, catChannels);
+        APP.MongoDB.collection("Channels").insertOne({
+            category: category.id,
+            categoryName: category.name,
+            channels: catChannels,
+        })
     }
 }
