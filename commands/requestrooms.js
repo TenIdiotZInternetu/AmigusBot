@@ -21,7 +21,17 @@ module.exports = {
                     required: true,
                 },{
                     name: "members",
-                    description: "Names of your teammates, use @",
+                    description: "Names of you and your teammates, use @",
+                    type: 'STRING',
+                    required: false,
+                },{
+                    name: "proof-atch",
+                    description: "Screenshot proving your attendence in the tournament",
+                    type: 'ATTACHMENT',
+                    required: false,
+                },{
+                    name: "proof-link",
+                    description: "Link proving your attendence in a tournament",
                     type: 'STRING',
                     required: false,
                 }
@@ -33,8 +43,9 @@ module.exports = {
         const tour = interaction.options.getString('title', true);
         const abr = interaction.options.getString('abr', true).toLowerCase();
         const members = interaction.options.getString('members', false);
+        const proofAtch = interaction.options.getAttachment('proof-atch', false).url;
+        const proofLink = interaction.options.getString('proof-link', false);
         let memberIds = [];
-
         
         
         // Verification --------------------------------------------------------------------------------------------------------
@@ -53,6 +64,9 @@ module.exports = {
                 memberIds.push(id[1]);
             }
         }
+
+        if (proofAtch) verifEmbed.setImage(proofAtch);
+        if (proofLink) verifEmbed.addField("Proof link", proofLink);
         
         verif = await require('../events/adminVerif.js').execute(interaction, verifEmbed);
         if (!verif) return;
