@@ -10,10 +10,7 @@ module.exports = {
         if (!channel.type === 'GUILD_CATEGORY') return;
         if (!APP.cachedChannels.has(channel.id)) return;
 
-        console.log(APP.cachedChannels)
-
         APP.cachedChannels.get(channel.id).forEach(childId => {
-            console.log(childId)
             channel.guild.channels.fetch(childId)
                 .then(child => child.delete())
                 .catch(err => console.error(err));
