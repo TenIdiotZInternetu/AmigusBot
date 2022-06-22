@@ -1,8 +1,30 @@
 const Discord = require('discord.js');
-const APP = require('../appGlobals.js')
+const APP = require('../appGlobals.js');
 
 const rounds = ["qualifs", "groups", "ro128", "ro64", "ro32", "ro16", "quarters",
-                "semis", "finals", "gfinals"]
+                "semis", "finals", "gfinals"];
+
+const roundsFull = ["Qualifiers", "Group Stage", "Round of 128", "Round of 64", "Round of 32", "Round of 16",
+                    "Quarterfinals", "Semifinals", "Finals", "Grand Finals"];
+
+const roundOptions = []
+
+for (let i = 0; i < 10; i++) {
+    let prefix = "Have you won all your matches in the "
+    let suffix = "? (+1)"
+
+    if (i < 2) prefix = "Did you pass the ";
+    if (i === 7) suffix = "? (+2)";
+    if (i === 8) suffix = "? (+3)";
+    if (i === 9) suffix = ", winning the tournament? (+5)"
+
+    roundOptions.push({
+        name: rounds[i],
+        description: prefix + roundsFull[i] + suffix,
+        type: 'BOOLEAN',
+        required: false,
+    })
+}
 
 module.exports = {
     name: "hof-promote",
@@ -17,57 +39,7 @@ module.exports = {
                     description: "Name of the tournament",
                     type: 'STRING',
                     required: true,
-                },{
-                    name: rounds[0],
-                    description: "Did you pass the Qualifiers? (+1)",
-                    type: 'BOOLEAN',
-                    required: true,
-                },{
-                    name: rounds[1],
-                    description: "Did you pass the Group Stage? (+1)",
-                    type: 'BOOLEAN',
-                    required: false,
-                },{
-                    name: rounds[2],
-                    description: "Have you won all your matches in the Round of 128? (+1)",
-                    type: 'BOOLEAN',
-                    required: false,
-                },{
-                    name: rounds[3],
-                    description: "Have you won all your matches in the Round of 64? (+1)",
-                    type: 'BOOLEAN',
-                    required: false,
-                },{
-                    name: rounds[4],
-                    description: "Have you won all your matches in the Round of 32? (+1)",
-                    type: 'BOOLEAN',
-                    required: false,
-                },{
-                    name: rounds[5],
-                    description: "Have you won all your matches in the Round of 16? (+1)",
-                    type: 'BOOLEAN',
-                    required: false,
-                },{
-                    name: rounds[6],
-                    description: "Have you won all your matches in the Quarterfinals? (+1)",
-                    type: 'BOOLEAN',
-                    required: false,
-                },{
-                    name: rounds[7],
-                    description: "Have you won all your matches in the Semifinals? (+2)",
-                    type: 'BOOLEAN',
-                    required: false,
-                },{
-                    name: rounds[8],
-                    description: "Have you won all your matches in the Finals? (+3)",
-                    type: 'BOOLEAN',
-                    required: false,
-                },{
-                    name: rounds[9],
-                    description: "Have you won all your matches in the Grand Finals, winning the tournament? (+5)",
-                    type: 'BOOLEAN',
-                    required: false,
-                },{
+                }].concat(roundOptions, [{
                     name: "badged",
                     description: "Is the tournament badged?",
                     type: 'BOOLEAN',
@@ -83,17 +55,12 @@ module.exports = {
                     type: 'STRING',
                     required: false,
                 },{
-                    name: "date",
-                    description: "Date of your last match in the tournament (mm-yyyy)",
-                    type: 'STRING',
-                    required: false,
-                },{
                     name: "binary",
                     description: "Won rounds in a binary format (10 digits)",
                     type: 'STRING',
                     required: false,
                 }
-            ]
+            ])
         })
     },
 
@@ -104,8 +71,7 @@ module.exports = {
         const isBadged = opts.getBoolean("badged", false);
         const proofLink = opts.getString("proof", false);
         const members = opts.getString("members", false);
-        const date = opts.getString("date", false);
-        const bin = opts.getString("binary")
+        const bin = opts.getString("binary", false)
         const memberIds = [];
 
 
@@ -139,6 +105,20 @@ module.exports = {
 
 
         // Latest Reached Stage ------------------------------------------------------------------------------------------------
+        if (pointsBin[9] === '1') {
+            const lastStage = "Beyond";
+        }
+
+        for (let i = 8; i >= 2 && !lastStage; i--) {
+            if (pointsBin[i] = '1') {
+                const lastStage = roundsFull[i + 1]
+                break;
+            }
+        }
+
+        if (!lastStage) {
+            const lastStage = "Qualified";
+        }
         
 
         // Verification --------------------------------------------------------------------------------------------------------
