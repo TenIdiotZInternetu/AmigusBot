@@ -45,7 +45,7 @@ module.exports = {
         const members = interaction.options.getString('members', false);
         const proofAtch = interaction.options.getAttachment('proof-atch', false).url;
         const proofLink = interaction.options.getString('proof-link', false);
-        let memberIds = [];
+        const memberIds = [];
         
         
         // Verification --------------------------------------------------------------------------------------------------------
