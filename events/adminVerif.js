@@ -43,14 +43,14 @@ module.exports = {
 
         answer = await new Promise(resolve => collector.on('collect', async bi => {
             if (bi.customId === 'verifApprove') {
-                questionEmbed.setTitle("Rooms request - APPROVED");
+                questionEmbed.setTitle(`${questionEmbed.title} - APPROVED`);
                 questionEmbed.setColor('#3ba55c');
                 bi.update({ embeds: [questionEmbed], components: []});
                 resolve(true);
             }
 
             if (bi.customId === 'verifIgnore') {
-                questionEmbed.setTitle("Rooms request - IGNORED");
+                questionEmbed.setTitle(`${questionEmbed.title} - IGNORED`);
                 questionEmbed.setColor('#ed4245');
                 bi.update({ embeds: [questionEmbed], components: []});
                 resolve(false);

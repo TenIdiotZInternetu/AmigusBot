@@ -55,6 +55,11 @@ module.exports = {
                     type: 'STRING',
                     required: false,
                 },{
+                    name: "placement",
+                    description: "Your final placement in the tournament",
+                    type: 'NUMBER',
+                    required: false,
+                },{
                     name: "binary",
                     description: "Won rounds in a binary format (10 digits)",
                     type: 'STRING',
@@ -72,7 +77,18 @@ module.exports = {
         const proofLink = opts.getString("proof", false);
         const members = opts.getString("members", false);
         const bin = opts.getString("binary", false)
+        const placement = opts.getNumber("placement", false);
         const memberIds = [];
+
+
+        // Member IDs ----------------------------------------------------------------------------------------------------------
+        if (members) {
+            for (const id of members.matchAll(/<@!(\d*)>/g)) {
+                memberIds.push(id[1]);
+            }
+        } else {
+            memberIds.push(interaction.member.id)
+        }
 
 
         // Points Calculation --------------------------------------------------------------------------------------------------
@@ -85,39 +101,44 @@ module.exports = {
 
         if (bin) {
             if (bin.length != 10) {
-                interaction.channel.send("Binary not in correct format, skipping this step");
+                interaction.reply("Binary not in correct format, skipping this step");
             }
 
             if (bin.length == 10) pointsBin = bin;
         }
 
-        let points = 0;
+        let earnedPoints = 0;
 
         for (let i = 0; i < 7; i++) {
-            points += parseInt(pointsBin[i]);
+            earnedPoints += parseInt(pointsBin[i]);
         }
         
-        points += parseInt(pointsBin[7]) * 2;
-        points += parseInt(pointsBin[8]) * 3;
-        points += parseInt(pointsBin[9]) * 5;
+        earnedPoints += parseInt(pointsBin[7]) * 2;
+        earnedPoints += parseInt(pointsBin[8]) * 3;
+        earnedPoints += parseInt(pointsBin[9]) * 5;
 
-        if (isBadged) points++;
+        if (isBadged) earnedPoints++;
 
 
         // Latest Reached Stage ------------------------------------------------------------------------------------------------
-        if (pointsBin[9] === '1') {
-            const lastStage = "Beyond";
-        }
+        let lastStage = '';
 
-        for (let i = 8; i >= 2 && !lastStage; i--) {
-            if (pointsBin[i] = '1') {
-                const lastStage = roundsFull[i + 1]
+        for (let i = 9; i >= 2; i--) {
+            if (pointsBin[i] === '1') {
+                lastStage = roundsFull[i];
                 break;
             }
         }
 
-        if (!lastStage) {
-            const lastStage = "Qualified";
+
+        // Placement -----------------------------------------------------------------------------------------------------------
+        let placementString = '';
+
+        if (placement) {
+            if (placement === 1) placementString = "1st place";
+            if (placement === 2) placementString = "2nd place";
+            if (placement === 3) placementString = "3rd place";
+            if (placement > 3) placementString = `top ${placement}`;
         }
         
 
@@ -128,19 +149,58 @@ module.exports = {
             .setURL(interaction.url)
             .setColor('#24bdb8')
             .setTitle("Promotion request")
-            .setDescription(`${tour} (${points} points)`)
+            .setDescription(`${tour} - ${lastStage} (${earnedPoints} points)`)
+            .addField("Rounds", pointsBin);
 
-        if (members) {
-            verifEmbed.addField("Team Members", members)
-
-            for (const id of members.matchAll(/<@!(\d*)>/g)) {
-                memberIds.push(id[1]);
-            }
-        }
-
+        if (members) verifEmbed.addField("Team Members", members);
+        if (placementString) verifEmbed.addField("Placement", placementString);
         if (proofLink) verifEmbed.addField("Proof link", proofLink);
+        if (isBadged) verifEmbed.addField("Badged?", 'badged!');
         
         verif = await require('../events/adminVerif.js').execute(interaction, verifEmbed);
         if (!verif) return;
+
+        // Database Insert -----------------------------------------------------------------------------------------------------
+        const db = await APP.MongoDB.collection("HoF");
+        const tourEntry = {
+            title: tour,
+            lastWonStage: lastStage,
+            pointsEarned: earnedPoints,
+            members: memberIds,
+            placement: placementString,
+            isBadged: isBadged
+        }
+
+        for (const memberId of memberIds) {
+            const doc = await db.findOne({memberId: memberId})
+            let badges = 0
+
+            if (isBadged && parseInt(pointsBin[9])) badges++;
+
+            // Insert new document if it doesn't already exist
+            if (!doc) {
+                db.insertOne({
+                    memberId: memberId,
+                    totalPoints: earnedPoints,
+                    badges: badges,
+                    tournamentList: [tourEntry]
+                });
+
+                continue;
+            }
+
+            // Update existing document
+            const updateDoc = { 
+                $set: {
+                    totalPoints: doc.totalPoints + earnedPoints,
+                    badges: doc.badges + badges,
+                },
+                $push: {
+                    "tournamentList": tourEntry,
+                }
+            }
+
+            db.updateOne({memberId: memberId}, updateDoc)
+        }
     }
 }
