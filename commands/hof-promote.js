@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const APP = require('../appGlobals.js');
+const Utils = require('../utils.js');
 
 const rounds = ["qualifs", "groups", "ro128", "ro64", "ro32", "ro16", "quarters",
                 "semis", "finals", "gfinals"];
@@ -30,7 +31,7 @@ module.exports = {
     name: "hof-promote",
     slash: true,
 
-    create() {
+    async create() {
         APP.CommandManager.create({
             name: "hof-promote",
             description: "Register your tournament achievements to earn points and appear in the hall of fame",
@@ -78,18 +79,8 @@ module.exports = {
         const members = opts.getString("members", false);
         const bin = opts.getString("binary", false)
         const placement = opts.getNumber("placement", false);
-        const memberIds = [];
 
-
-        // Member IDs ----------------------------------------------------------------------------------------------------------
-        if (members) {
-            for (const id of members.matchAll(/<@!(\d*)>/g)) {
-                memberIds.push(id[1]);
-            }
-        } else {
-            memberIds.push(interaction.member.id)
-        }
-
+        const memberIds = Utils.membersToArray(members, interaction)
 
         // Points Calculation --------------------------------------------------------------------------------------------------
         let pointsBin = '';
@@ -161,7 +152,7 @@ module.exports = {
         if (!verif) return;
 
         // Database Insert -----------------------------------------------------------------------------------------------------
-        const db = await APP.MongoDB.collection("HoF");
+        const hofCol = await APP.MongoDB.collection("HoF");
         const tourEntry = {
             title: tour,
             lastWonStage: lastStage,
@@ -172,14 +163,14 @@ module.exports = {
         }
 
         for (const memberId of memberIds) {
-            const doc = await db.findOne({memberId: memberId})
+            const doc = await hofCol.findOne({memberId: memberId})
             let badges = 0
 
             if (isBadged && parseInt(pointsBin[9])) badges++;
 
             // Insert new document if it doesn't already exist
             if (!doc) {
-                db.insertOne({
+                hofCol.insertOne({
                     memberId: memberId,
                     totalPoints: earnedPoints,
                     badges: badges,
@@ -197,10 +188,11 @@ module.exports = {
                 },
                 $push: {
                     "tournamentList": tourEntry,
-                }
+                },
+                isUpdated: true,
             }
 
-            db.updateOne({memberId: memberId}, updateDoc)
+            hofCol.updateOne({memberId: memberId}, updateDoc)
         }
     }
 }

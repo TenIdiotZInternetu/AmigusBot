@@ -1,5 +1,7 @@
 const Discord = require('discord.js');
 const APP = require('../appGlobals.js')
+const Utils = require('../utils');
+
 
 module.exports = {
     name: "request-rooms",
@@ -43,9 +45,10 @@ module.exports = {
         const tour = interaction.options.getString('title', true);
         const abr = interaction.options.getString('abr', true).toLowerCase();
         const members = interaction.options.getString('members', false);
-        const proofAtch = interaction.options.getAttachment('proof-atch', false).url;
+        const proofAtch = interaction.options.getAttachment('proof-atch', false);
         const proofLink = interaction.options.getString('proof-link', false);
-        const memberIds = [];
+
+        const memberIds = Utils.membersToArray(members, interaction)
         
         
         // Verification --------------------------------------------------------------------------------------------------------
@@ -57,15 +60,8 @@ module.exports = {
             .setTitle("Rooms request")
             .setDescription(`${tour} (${abr})`)
 
-        if (members) {
-            verifEmbed.addField("Team Members", members)
-
-            for (const id of members.matchAll(/<@!(\d*)>/g)) {
-                memberIds.push(id[1]);
-            }
-        }
-
-        if (proofAtch) verifEmbed.setImage(proofAtch);
+        if (members) verifEmbed.addField("Team Members", members);
+        if (proofAtch) verifEmbed.setImage(proofAtch.url);
         if (proofLink) verifEmbed.addField("Proof link", proofLink);
         
         verif = await require('../events/adminVerif.js').execute(interaction, verifEmbed);
@@ -81,10 +77,8 @@ module.exports = {
             hoist: true
         })
 
-        if (members) {
-            for (const id of memberIds) {
-                APP.Guild.members.cache.get(id).roles.add(newRole);
-            }
+        for (const id of memberIds) {
+            APP.Guild.members.cache.get(id).roles.add(newRole);
         }
 
 
@@ -94,11 +88,13 @@ module.exports = {
 
         
         for (const title of ["announcements", "links", "general", "scores", "lobbies", "voice"]) {
-            let chanType = 'GUILD_TEXT';
-            let perms = new Discord.Permissions(1067365944896n);
+            let chanType, perms;
 
             if (title == "announcements" || title == "links") perms = new Discord.Permissions(66624n);
+            else perms = new Discord.Permissions(1067365944896n);
+
             if (title == "voice") chanType = 'GUILD_VOICE';
+            else chanType = 'GUILD_TEXT';
 
             await interaction.guild.channels.create(`${abr}-${title}`, {parent: category, type: chanType})
                 .then(chan => {
