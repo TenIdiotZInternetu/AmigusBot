@@ -1,6 +1,7 @@
 const Discord = require('discord.js');
 const APP = require('../appGlobals.js');
 const Utils = require('../utils.js');
+const Mongo = require('../dbGlobals');
 
 const rounds = ["qualifs", "groups", "ro128", "ro64", "ro32", "ro16", "quarters",
                 "semis", "finals", "gfinals"];
@@ -152,7 +153,7 @@ module.exports = {
         if (!verif) return;
 
         // Database Insert -----------------------------------------------------------------------------------------------------
-        const hofCol = await APP.MongoDB.collection("HoF");
+        const hofCol = await Mongo.DB.collection("HoF");
         const tourEntry = {
             title: tour,
             lastWonStage: lastStage,

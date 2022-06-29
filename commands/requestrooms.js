@@ -1,6 +1,7 @@
 const Discord = require('discord.js');
 const APP = require('../appGlobals.js')
 const Utils = require('../utils');
+const Mongo = require('../dbGlobals');
 
 
 module.exports = {
@@ -107,7 +108,7 @@ module.exports = {
         }
 
         APP.cachedChannels.set(category.id, catChannels);
-        APP.MongoDB.collection("Channels").insertOne({
+        Mongo.DB.collection("Channels").insertOne({
             category: category.id,
             categoryName: category.name,
             channels: catChannels,

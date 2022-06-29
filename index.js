@@ -5,6 +5,8 @@ const APP = require('./appGlobals.js')
 const commandFiles = fs.readdirSync("./commands/").filter(f => f.endsWith(".js"));
 const eventFiles = fs.readdirSync("./events/").filter(f => f.endsWith(".js"));
 
+APP.Client.login(process.env.TOKEN)
+
 APP.Client.once('ready', () => {
     const guild = APP.Client.guilds.cache.get(process.env.GUILD_ID);
     APP.Guild = guild;
@@ -26,7 +28,3 @@ APP.Client.once('ready', () => {
 
     console.log('Amigus is online!');
 });
-
-APP.Client.login(process.env.TOKEN)
-APP.MongoClient.connect()
-    .then(client => APP.MongoDB = client.db('SVK_Tournament_Scene'));
