@@ -1,7 +1,7 @@
 const Discord = require('discord.js');
 const APP = require('../appGlobals.js');
 const Utils = require('../utils.js');
-const Mongo = require('../dbGlobals');
+let Mongo;
 
 const rounds = ["qualifs", "groups", "ro128", "ro64", "ro32", "ro16", "quarters",
                 "semis", "finals", "gfinals"];
@@ -72,6 +72,7 @@ module.exports = {
     },
 
     async execute(interaction) {
+        Mongo = require('../dbGlobals');
         const opts = interaction.options;
 
         const tour = opts.getString("tourney", true);
@@ -153,7 +154,7 @@ module.exports = {
         if (!verif) return;
 
         // Database Insert -----------------------------------------------------------------------------------------------------
-        const hofCol = await Mongo.HOF;
+        const hofCol = Mongo.HOF;
         const tourEntry = {
             title: tour,
             lastWonStage: lastStage,

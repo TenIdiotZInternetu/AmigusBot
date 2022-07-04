@@ -15,7 +15,7 @@ client.connect(async (err) => {
     
     if (!singlesDoc) {
         singles.insertOne({
-            hofChannel: null,       // defined in hof-create.js
+            hofChannelId: null,       // defined in hof-create.js
         });
     }
 
@@ -29,5 +29,5 @@ client.connect(async (err) => {
         HOF_MESSAGES: db.collection("HoFMessages"),
     }
 
-    module.exports = globals
+    module.exports = (async () => { return globals})()
 });

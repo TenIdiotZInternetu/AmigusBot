@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const APP = require('../appGlobals.js');
+let Mongo;
 
 
 module.exports = {
@@ -21,7 +22,7 @@ module.exports = {
     },
 
     async execute(interaction) {
-        const Mongo = require('../dbGlobals.js');
+        Mongo = await require('../dbGlobals.js');
         let slots = interaction.options.getNumber('slots', false);
 
         if (!slots) slots = 10;
@@ -47,8 +48,8 @@ module.exports = {
         while (slots > 0) {
             let mess;
 
-            if (slots > 10) mess = hofChan.send({embeds: slotsArray});
-            else mess = hofChan.send({embeds: remSlotsArray})
+            if (slots > 9) mess = hofChan.send({embeds: slotsArray});
+            else if (remSlotsArray) mess = hofChan.send({embeds: remSlotsArray})
 
             Mongo.HOF_MESSAGES.insertOne({
                 messageId: mess.id
