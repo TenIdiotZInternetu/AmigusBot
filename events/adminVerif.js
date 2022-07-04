@@ -9,7 +9,7 @@ module.exports = {
     once: false,
 
     async execute(interaction, questionEmbed) {
-        if (interaction.member.roles.cache.has(process.env.ADMIN_ROLE_ID)) resolve(true);
+        if (interaction.member.permissions.has('ADMINISTRATOR')) return true;
         
 
         // Interaction Creation -----------------------------------------------------------------------------------------------------------

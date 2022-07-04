@@ -5,14 +5,14 @@ module.exports = {
     name: "migo",
     slash: true,
 
-    create() {
+    async create() {
         APP.CommandManager.create({
             name: "migo",
             description: "je kokot"
         })
     },
 
-    execute(interaction) {
+    async execute(interaction) {
         const embed = new Discord.MessageEmbed()
             .setImage(process.env.KOKOT_MIGO)
             .setTitle('je kokot')

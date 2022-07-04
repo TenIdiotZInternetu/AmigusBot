@@ -108,7 +108,7 @@ module.exports = {
         }
 
         APP.cachedChannels.set(category.id, catChannels);
-        Mongo.DB.collection("Channels").insertOne({
+        Mongo.CHANNELS.insertOne({
             category: category.id,
             categoryName: category.name,
             channels: catChannels,

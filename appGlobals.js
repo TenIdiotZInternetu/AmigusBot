@@ -14,5 +14,5 @@ module.exports = {
 
     commands: {},
     events: {},
-    cachedChannels: new Map()
+    cachedChannels: new Map(),
 };

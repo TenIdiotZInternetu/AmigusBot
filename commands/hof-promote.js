@@ -153,7 +153,7 @@ module.exports = {
         if (!verif) return;
 
         // Database Insert -----------------------------------------------------------------------------------------------------
-        const hofCol = await Mongo.DB.collection("HoF");
+        const hofCol = await Mongo.HOF;
         const tourEntry = {
             title: tour,
             lastWonStage: lastStage,
