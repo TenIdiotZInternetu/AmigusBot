@@ -12,6 +12,30 @@ membersToArray = (members, interaction='') => {
     return memberIds;
 }
 
+
+pointsToRole = (points) => {
+    const roles = [
+        {name: "Impostor", level: 0, color: '#c7c7c7', reqPoints: 0},
+        {name: "Newbie", level: 1, color: '#b2e0e3', reqPoints: 1},
+        {name: "Apprentice", level: 2, color: '#6bf1ca', reqPoints: 5},
+        {name: "Regular", level: 3, color: '#35ff55', reqPoints: 15},
+        {name: "Skilled", level: 4, color: '#f3c155', reqPoints: 30},
+        {name: "Master", level: 5, color: '#f34c44', reqPoints: 75},
+        {name: "Amigus", level: 6, color: '#ff28e4', reqPoints: 150},
+    ]   
+
+    let lastRole = roles[0];
+    
+    for (const role of roles) {
+        if (points < role.reqPoints) return lastRole;
+        lastRole = role;
+    }
+
+    return roles[-1];
+}
+
+
 module.exports = {
     membersToArray,
+    pointsToRole,
 }
