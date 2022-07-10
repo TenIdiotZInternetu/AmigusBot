@@ -20,6 +20,10 @@ function deleteSingleton(singletonDoc, field) {
     filter = {};
     filter[field] = singletonDoc[field];
     Mongo.SINGLETONS.updateOne(filter, updateDoc);
+
+    if (field == 'hofChannelId') {
+        Mongo.HOF_MESSAGES.deleteMany();
+    }
 }
 
  

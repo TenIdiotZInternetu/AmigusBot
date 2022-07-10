@@ -72,7 +72,7 @@ module.exports = {
     },
 
     async execute(interaction) {
-        Mongo = require('../dbGlobals');
+        Mongo = await require('../dbGlobals');
         const opts = interaction.options;
 
         const tour = opts.getString("tourney", true);
@@ -158,6 +158,7 @@ module.exports = {
         const tourEntry = {
             title: tour,
             lastWonStage: lastStage,
+            stages: pointsBin,
             pointsEarned: earnedPoints,
             members: memberIds,
             placement: placementString,
@@ -190,8 +191,7 @@ module.exports = {
                 },
                 $push: {
                     "tournamentList": tourEntry,
-                },
-                isUpdated: true,
+                }
             }
 
             hofCol.updateOne({memberId: memberId}, updateDoc)

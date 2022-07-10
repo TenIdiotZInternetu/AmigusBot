@@ -1,3 +1,5 @@
+const APP = require('./appGlobals.js');
+
 membersToArray = (members, interaction='') => {
     const memberIds = [];
 
@@ -10,6 +12,18 @@ membersToArray = (members, interaction='') => {
     }
 
     return memberIds;
+}
+
+
+membersToString = (memberIds, sep=', ') => {
+    let outStr = "";
+
+    for (const id of memberIds) {
+        if (id !== memberIds[0]) outStr += sep;
+        outStr += APP.Guild.members.cache.get(id).displayName;
+    }
+
+    return outStr;
 }
 
 
@@ -37,5 +51,6 @@ pointsToRole = (points) => {
 
 module.exports = {
     membersToArray,
+    membersToString,
     pointsToRole,
 }

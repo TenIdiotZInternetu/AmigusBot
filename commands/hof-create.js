@@ -33,6 +33,8 @@ module.exports = {
             return;
         }
 
+
+        // Creating the #hall-of-fame channel -------------------------------------------------------------------------------------=
         const hofChan = await interaction.guild.channels.create("hall-of-fame", {type: 'GUILD_TEXT'})
             .catch(err => console.error(err));
         
@@ -42,17 +44,20 @@ module.exports = {
             $set: {hofChannelId: hofChan.id}
         })
         
+
+        // Sending messages with empty embeds --------------------------------------------------------------------------------------
         const slotsArray = Array(10).fill(new Discord.MessageEmbed().setDescription('Your future achievements here'));
         const remSlotsArray = Array(slots % 10).fill(new Discord.MessageEmbed().setDescription('Your future achievements here'));
 
         while (slots > 0) {
             let mess;
 
-            if (slots > 9) mess = hofChan.send({embeds: slotsArray});
-            else if (remSlotsArray) mess = hofChan.send({embeds: remSlotsArray})
+            if (slots > 9) mess = await hofChan.send({embeds: slotsArray});
+            else if (remSlotsArray) mess = await hofChan.send({embeds: remSlotsArray})
 
             Mongo.HOF_MESSAGES.insertOne({
-                messageId: mess.id
+                messageId: mess.id,
+                dateCreated: new Date(),
             })
 
             slots -= 10;
