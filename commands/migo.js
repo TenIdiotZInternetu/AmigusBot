@@ -1,5 +1,5 @@
 const Discord = require('discord.js');
-const APP = require("../appGlobals.js");
+const APP = require("../index.js");
 
 module.exports = {
     name: "migo",
@@ -15,10 +15,10 @@ module.exports = {
     async execute(interaction) {
         const embed = new Discord.MessageEmbed()
             .setImage(process.env.KOKOT_MIGO)
-            .setTitle('je kokot')
+            .setTitle('Migo')
+            .setDescription('je kokot')
             .setColor('#f172fc');
 
-        interaction.channel.send({embeds: [embed]});
-
+        interaction.editReply({embeds: [embed]});
     }
 }

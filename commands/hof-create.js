@@ -1,6 +1,8 @@
 const Discord = require('discord.js');
-const APP = require('../appGlobals.js');
-let Mongo;
+const { InstanceLimitError } = require('../errors.js');
+const APP = require('../index.js');
+const { newHofMessage } = require('../utils.js');
+const Mongo = require('../dbGlobals');
 
 
 module.exports = {
@@ -22,15 +24,13 @@ module.exports = {
     },
 
     async execute(interaction) {
-        Mongo = await require('../dbGlobals.js');
         let slots = interaction.options.getNumber('slots', false);
 
-        if (!slots) slots = 10;
+        if (!slots) slots = 5;
         const single = await Mongo.SINGLETONS.findOne()
         
         if (single.hofChannelId) {
-            console.log("HOF already exists");
-            return;
+            throw new InstanceLimitError("Hall of fame channel already exists", "#hall-of-fame", 1)
         }
 
 
@@ -38,7 +38,7 @@ module.exports = {
         const hofChan = await interaction.guild.channels.create("hall-of-fame", {type: 'GUILD_TEXT'})
             .catch(err => console.error(err));
         
-        hofChan.permissionOverwrites.edit(APP.Guild.roles.everyone, new Discord.Permissions(66624n).serialize());
+        hofChan.permissionOverwrites.edit(interaction.guild.roles.everyone, new Discord.Permissions(66624n).serialize());
 
         Mongo.SINGLETONS.updateOne({}, {
             $set: {hofChannelId: hofChan.id}
@@ -46,21 +46,8 @@ module.exports = {
         
 
         // Sending messages with empty embeds --------------------------------------------------------------------------------------
-        const slotsArray = Array(10).fill(new Discord.MessageEmbed().setDescription('Your future achievements here'));
-        const remSlotsArray = Array(slots % 10).fill(new Discord.MessageEmbed().setDescription('Your future achievements here'));
-
-        while (slots > 0) {
-            let mess;
-
-            if (slots > 9) mess = await hofChan.send({embeds: slotsArray});
-            else if (remSlotsArray) mess = await hofChan.send({embeds: remSlotsArray})
-
-            Mongo.HOF_MESSAGES.insertOne({
-                messageId: mess.id,
-                dateCreated: new Date(),
-            })
-
-            slots -= 10;
+        for (; slots > 0; slots--) {
+            newHofMessage(Mongo, hofChan);
         }
     }
 }

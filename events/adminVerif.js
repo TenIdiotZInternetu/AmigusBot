@@ -1,6 +1,9 @@
 const Discord = require('discord.js');
-const { resolve } = require('path');
-const APP = require('../appGlobals.js')
+const APP = require('../index.js');
+const { RequestDeniedError } = require('../errors.js');
+const { requestApproved } = require('../success.js');
+const { alert } = require('../errors.js');
+
 
 
 module.exports = {
@@ -9,7 +12,12 @@ module.exports = {
     once: false,
 
     async execute(interaction, questionEmbed) {
-        if (interaction.member.permissions.has('ADMINISTRATOR')) return true;
+        // if (interaction.member.permissions.has('ADMINISTRATOR')) {
+        //     interaction.editReply({embeds: [requestApproved()], ephemeral: true})
+        //         .catch(err => alert(err, interaction))
+                
+        //     return;
+        // };
         
 
         // Interaction Creation -----------------------------------------------------------------------------------------------------------
@@ -19,9 +27,11 @@ module.exports = {
             .setColor('#3ba55c')
             .setAuthor({name: interaction.member.user.username, iconURL: interaction.member.displayAvatarURL()});
 
-        interaction.reply({embeds: [embed], ephemeral: true});
+        interaction.editReply({embeds: [embed], ephemeral: true})
+            .catch(err => alert(err, interaction))
 
-        const row = new Discord.MessageActionRow()
+
+        const buttonRow = new Discord.MessageActionRow()
             .addComponents(
                 new Discord.MessageButton()
                     .setCustomId('verifApprove')
@@ -34,29 +44,31 @@ module.exports = {
             )
 
         const verifChannel = APP.Client.channels.cache.get(process.env.VERIF_CHANNEL_ID);
-        const verifMessage = await verifChannel.send({ embeds: [questionEmbed], components: [row] });
+        const verifMessage = await verifChannel.send({ embeds: [questionEmbed], components: [buttonRow] });
 
 
         // Interaction Resolution --------------------------------------------------------------------------------------------------------
         const collector = verifMessage.createMessageComponentCollector({max: 1});
-        let answer;
 
-        answer = await new Promise(resolve => collector.on('collect', async bi => {
+        await new Promise((resolve, reject) => collector.on('collect', async bi => {
             if (bi.customId === 'verifApprove') {
                 questionEmbed.setTitle(`${questionEmbed.title} - APPROVED`);
-                questionEmbed.setColor('#3ba55c');
+                questionEmbed.setColor(APP.SuccessColor);
                 bi.update({ embeds: [questionEmbed], components: []});
-                resolve(true);
+                resolve();
             }
 
             if (bi.customId === 'verifIgnore') {
                 questionEmbed.setTitle(`${questionEmbed.title} - IGNORED`);
-                questionEmbed.setColor('#ed4245');
+                questionEmbed.setColor(APP.ErrorColor);
                 bi.update({ embeds: [questionEmbed], components: []});
-                resolve(false);
+                reject();
             }
         }))
-
-        return answer;
+        .then(
+            () => { interaction.editReply({embeds: [requestApproved()], ephemeral: true}); },
+            () => { throw new RequestDeniedError(); }
+        )
+        .catch(err => alert(err, interaction))
     }
 }

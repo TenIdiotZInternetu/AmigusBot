@@ -1,11 +1,12 @@
-const Discord = require('discord.js')
-const APP = require('../appGlobals.js')
-let Mongo;
+const Discord = require('discord.js');
+const APP = require('../index.js');
+const Mongo = require('../dbGlobals');
 
 
-function deleteCategory(categoryDoc) {
+
+function deleteCategory(categoryDoc, guild) {
     categoryDoc.channels.forEach(childId => {
-        APP.Guild.channels.fetch(childId)
+        guild.channels.fetch(childId)
             .then(child => child.delete())
             .catch(err => console.error(err));
     });
@@ -15,8 +16,8 @@ function deleteCategory(categoryDoc) {
 
 
 function deleteSingleton(singletonDoc, field) {
-    updateDoc = {'$set': {}};
-    updateDoc['$set'][field] = null;
+    updateDoc = {'$unset': {}};
+    updateDoc['$unset'][field] = '';
     filter = {};
     filter[field] = singletonDoc[field];
     Mongo.SINGLETONS.updateOne(filter, updateDoc);
@@ -33,14 +34,10 @@ module.exports = {
     once: false,
 
     async execute(channel) {
-        Mongo = await require('../dbGlobals.js');
-
         const categoryDoc = await Mongo.CHANNELS.findOne({category: channel.id});
         const hofDoc = await Mongo.SINGLETONS.findOne({hofChannelId: channel.id});
 
-        if (categoryDoc) deleteCategory(categoryDoc);
+        if (categoryDoc) deleteCategory(categoryDoc, channel.guild);
         if (hofDoc) deleteSingleton(hofDoc, 'hofChannelId');
-
-        
     }
 }

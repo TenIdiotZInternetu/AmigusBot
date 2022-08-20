@@ -1,7 +1,10 @@
 const Discord = require('discord.js');
-const APP = require('../appGlobals.js');
+const APP = require('../index.js');
 const Utils = require('../utils.js');
-let Mongo;
+const Mongo = require('../dbGlobals');
+const {execute: AdminVerif} = require('../events/adminVerif.js')
+const { InvalidInputError } = require('../errors.js');
+
 
 const rounds = ["qualifs", "groups", "ro128", "ro64", "ro32", "ro16", "quarters",
                 "semis", "finals", "gfinals"];
@@ -72,7 +75,6 @@ module.exports = {
     },
 
     async execute(interaction) {
-        Mongo = await require('../dbGlobals');
         const opts = interaction.options;
 
         const tour = opts.getString("tourney", true);
@@ -110,6 +112,7 @@ module.exports = {
         earnedPoints += parseInt(pointsBin[8]) * 3;
         earnedPoints += parseInt(pointsBin[9]) * 5;
 
+        if (earnedPoints < 1) throw new InvalidInputError("Tournament with no rounds passed cannot be promoted")
         if (isBadged) earnedPoints++;
 
 
@@ -150,7 +153,7 @@ module.exports = {
         if (proofLink) verifEmbed.addField("Proof link", proofLink);
         if (isBadged) verifEmbed.addField("Badged?", 'badged!');
         
-        verif = await require('../events/adminVerif.js').execute(interaction, verifEmbed);
+        verif = await AdminVerif(interaction, verifEmbed);
         if (!verif) return;
 
         // Database Insert -----------------------------------------------------------------------------------------------------

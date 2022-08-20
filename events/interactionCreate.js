@@ -1,16 +1,18 @@
 const Discord = require('discord.js');
-const APP = require('../appGlobals.js');
+const APP = require('../index.js');
+const { alert } = require('../errors.js')
 
 async function execute(interaction) {
     if (interaction.isButton()) exButton();
     if (interaction.isCommand()) exCommand();
 
-    function exButton() {
-
+    async function exButton() {
     }
 
-    function exCommand() {
-        APP.commands[interaction.commandName].execute(interaction);
+    async function exCommand() {
+        await interaction.deferReply({ ephemeral: true });
+        APP.commands[interaction.commandName].execute(interaction)
+            .catch(err => alert(err, interaction));
     }
 }
 

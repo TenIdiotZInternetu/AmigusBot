@@ -1,15 +1,16 @@
 const Discord = require('discord.js');
-const APP = require('../appGlobals.js')
+const APP = require('../index.js');
 const Utils = require('../utils');
 const Mongo = require('../dbGlobals');
+const {execute: AdminVerif} = require('../events/adminVerif.js')
+const { InvalidInputError } = require('../errors.js');
 
 
 module.exports = {
     name: "request-rooms",
-    slash: true,
 
-    create() {
-        APP.CommandManager.create({
+    getMetadata() {
+        return {
             name: "request-rooms",
             description: "Get a category with private rooms for your team",
             options: [{
@@ -28,7 +29,7 @@ module.exports = {
                     type: 'STRING',
                     required: false,
                 },{
-                    name: "proof-atch",
+                    name: "proof-image",
                     description: "Screenshot proving your attendence in the tournament",
                     type: 'ATTACHMENT',
                     required: false,
@@ -39,17 +40,20 @@ module.exports = {
                     required: false,
                 }
             ]
-        })
+        }
     },
 
     async execute(interaction) {
         const tour = interaction.options.getString('title', true);
         const abr = interaction.options.getString('abr', true).toLowerCase();
         const members = interaction.options.getString('members', false);
-        const proofAtch = interaction.options.getAttachment('proof-atch', false);
+        const proofAtch = interaction.options.getAttachment('proof-image', false);
         const proofLink = interaction.options.getString('proof-link', false);
 
-        const memberIds = Utils.membersToArray(members, interaction)
+        if (abr.length > 5) throw new InvalidInputError("Please don't use more than 5 characters", 'abr', abr)
+
+        const memberIds = Utils.membersToArray(members, interaction);
+        if (!memberIds.length) throw new InvalidInputError("Please use @username format", 'members', members);
         
         
         // Verification --------------------------------------------------------------------------------------------------------
@@ -65,12 +69,11 @@ module.exports = {
         if (proofAtch) verifEmbed.setImage(proofAtch.url);
         if (proofLink) verifEmbed.addField("Proof link", proofLink);
         
-        verif = await require('../events/adminVerif.js').execute(interaction, verifEmbed);
-        if (!verif) return;
+        await AdminVerif(interaction, verifEmbed)
 
 
         // Role Assignement ----------------------------------------------------------------------------------------------------
-        const newRole = await APP.Guild.roles.create({
+        const newRole = await interaction.guild.roles.create({
             name: abr.toUpperCase(),
             position: 5,
             mentionable: true,
@@ -79,7 +82,7 @@ module.exports = {
         })
 
         for (const id of memberIds) {
-            APP.Guild.members.cache.get(id).roles.add(newRole);
+            interaction.guild.members.cache.get(id).roles.add(newRole);
         }
 
 
@@ -101,13 +104,10 @@ module.exports = {
                 .then(chan => {
                     catChannels.push(chan.id);
                     chan.permissionOverwrites.edit(newRole, perms.serialize());
-                    chan.permissionOverwrites.edit(APP.Guild.roles.everyone, new Discord.Permissions(0n).serialize());
+                    chan.permissionOverwrites.edit(interaction.guild.roles.everyone, new Discord.Permissions(0n).serialize());
                 })
-                .catch(err => console.error(err));
-                
         }
-
-        APP.cachedChannels.set(category.id, catChannels);
+ 
         Mongo.CHANNELS.insertOne({
             category: category.id,
             categoryName: category.name,

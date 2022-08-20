@@ -1,6 +1,8 @@
 const Discord = require('discord.js');
-const APP = require('../appGlobals.js');
-const Utils = require('../utils');
+const { InstanceLimitError, DependencyMissingError} = require('../errors.js');
+const APP = require('../index.js');
+const { newHofMessage, pointsToRole, membersIdsToString, Markdown: m } = require('../utils');
+const Mongo = require('../dbGlobals');
 
 
 function createFields(hofDoc) {
@@ -8,17 +10,21 @@ function createFields(hofDoc) {
 
     for (const tour of hofDoc.tournamentList) {
         const badge = tour.isBadged && tour.lastWonStage === "Grand Finals" ? "+ BADGED" : "";
-        const members = tour.members.filter(id => id !== hofDoc.memberId)
+        let members = tour.members.filter(id => id !== hofDoc.memberId)
+        members = membersIdsToString(members, interaction);
 
-        tourVal += tour.title + '\n\t with ' + Utils.membersToString(members) + '\n\n'
+        tourVal += m(tour.title, 'bq') + '\n' + m('** **', 'q')
+        if (members) tourVal += `with ${members}`
+        tourVal += '\n\n'
+
         placeVal += tour.lastWonStage + '\n' + tour.placement + '\n\n'
         ptsVal += tour.pointsEarned + '\n' + badge + '\n\n'
     }
 
     return [
-        {name: "Tournament", value: tourVal, inline: true},
-        {name: "Placement", value: placeVal, inline: true},
-        {name: "Points", value: ptsVal, inline: true},
+        {name: m("Tournament", 'bu'), value: tourVal, inline: true},
+        {name: m("Placement", 'b'), value: placeVal, inline: true},
+        {name: m("Points", ''), value: ptsVal, inline: true},
     ];
 }
 
@@ -33,18 +39,20 @@ module.exports = {
         })
     },
 
-    async execute() {
-        const Mongo = await require('../dbGlobals');
+    async execute(interaction) {
         const singles = await Mongo.SINGLETONS.findOne({hofChannelId: {$exists: true}});
 
         if (!singles) {
-            console.log("The HOF channel doesn't exist")
-            return;
+            throw new DependencyMissingError(
+                "The Hall of Fame channel doesn't exist",
+                "#hall-of-fame",
+                "create it using */hof-create* first"
+            )
         }
 
-        // Query searches
-        const {hofChannel, hofMessages, hofEntries, hofCount} = await (async () => {
-            const chan = APP.Guild.channels.cache.get(singles.hofChannelId);
+        // Query searches ------------------------------------------------------------------------------
+        const {hofChannel, hofMessages, hofEntries, mesCount, hofCount} = await (async () => {
+            const chan = interaction.guild.channels.cache.get(singles.hofChannelId);
             const mess = Mongo.HOF_MESSAGES.find()
                 .sort({dateCreated: 1})
                 .project({messageId: 1, _id: 0})
@@ -52,49 +60,68 @@ module.exports = {
             const docs = Mongo.HOF.find()
                 .sort({badges: -1, totalPoints: -1})
                 .toArray();
-            const count = Mongo.HOF.countDocuments();
+            const mesCount = Mongo.HOF_MESSAGES.countDocuments()
+            const hofCount = Mongo.HOF.countDocuments()
 
             return {
                 hofChannel: await chan,
                 hofMessages: await mess,
                 hofEntries: await docs,
-                hofCount: await count
+                mesCount: await mesCount,
+                hofCount: await hofCount
             }
         })();
             
         let rank = 0;
-        let messageRank = 0;
-        let tempEmbeds;
+        let messageRank = 0; 
+        let message = await hofChannel.messages.fetch(hofMessages[messageRank].messageId);
+        let newEmbeds = []
 
-        await hofChannel.messages.fetch(hofMessages[messageRank].messageId)
-            .then(mess => tempEmbeds = mess.embeds);
-
+        // Embed creation ------------------------------------------------------------------------------
         for (const entry of hofEntries) {
-            const member = APP.Guild.members.cache.get(entry.memberId);
-            const role = Utils.pointsToRole(entry.totalPoints);
+            const member = interaction.guild.members.cache.get(entry.memberId);
+            const role = pointsToRole(entry.totalPoints);
+            let nextRoleDesc;
+
+            if (role.level < 7) {
+                const pointsToRankup = APP.RANKS[role.level+1].reqPoints - entry.totalPoints
+                const nextRole = APP.RANKS[role.level+1].name
+                nextRoleDesc = `Earn ${m(`${pointsToRankup} more points`, 'i')} to gain the role ${m(nextRole, 'u')}`
+            } else {
+                nextRoleDesc = "You already achieved the highest role. Congrutalations! Now touch grass."
+            }
+            
 
             let badgeSuffix = "";
             if (entry.badges == 1) badgeSuffix = "- 1 BADGE";
             if (entry.badges > 1) badgeSuffix = `- ${entry.badges} BADGES`;
 
-            tempEmbeds[rank % 10] = 
+            newEmbeds.push(
                 new Discord.MessageEmbed()
                     .setThumbnail(member.displayAvatarURL())
                     .setColor(role.color)
-                    .setTitle(`#${rank + 1} ${member.displayName} ${badgeSuffix}`)
-                    .setDescription(`${entry.totalPoints} points --> ${role.name}`)
+                    .setTitle(m(`#${rank + 1} ${member.displayName} ${badgeSuffix}`, 'bu') + '\n')
+                    .setDescription(
+                        m(`${entry.totalPoints} points`, 'b') + " => " + m(role.name, 'b') + 
+                        ` \n ${nextRoleDesc} \n** **.\n`
+                    )
                     .addFields(createFields(entry))
+            )
 
             rank++;
             
-            // Message edit and swap
-            if ((rank + 1) % 10 == 0 || rank == hofCount) {
-                hofChannel.messages.fetch(hofMessages[messageRank].messageId)
-                    .then(mess => mess.edit({embeds: tempEmbeds}))
-                    
+            // Message edit and swap --------------------------------------------------------------------
+            if (rank % 10 == 0 || rank == hofCount) {
+                message.edit({embeds: newEmbeds})
                 messageRank++;
-                await hofChannel.messages.fetch(hofMessages[messageRank].messageId)
-                    .then(mess => tempEmbeds = mess.embeds);
+
+                if (messageRank > mesCount) {
+                    message = newHofMessage(Mongo, hofChannel)
+                    continue
+                }
+
+                message = await hofChannel.messages.fetch(hofMessages[messageRank].messageId)
+                newEmbeds = message.embeds
             }
         }
     }
