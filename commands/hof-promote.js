@@ -35,8 +35,8 @@ module.exports = {
     name: "hof-promote",
     slash: true,
 
-    async create() {
-        APP.CommandManager.create({
+    getMetadata() {
+        return {
             name: "hof-promote",
             description: "Register your tournament achievements to earn points and appear in the hall of fame",
             options: [{
@@ -71,7 +71,7 @@ module.exports = {
                     required: false,
                 }
             ])
-        })
+        }
     },
 
     async execute(interaction) {

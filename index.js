@@ -11,7 +11,7 @@ const eventFiles = fs.readdirSync("./events/").filter(f => f.endsWith(".js"));
 
 const client = new discord.Client({intents: intents, partials: partials});
 client.login(process.env.TOKEN)
-    .then(t => {
+    .then(async t => {
         const guild = client.guilds.cache.get(process.env.GUILD_ID)
         const emotes = client.emojis.cache
         // const getEmote = client.emojis.cache.get
@@ -41,11 +41,13 @@ client.login(process.env.TOKEN)
             WarningColor: '#e8c202',
         };
 
-        client.application.commands.set([])
-        
+        await client.application.commands.set([]);
+        await guild.commands.set([])
+
         for (file of commandFiles) {
             const com = require(`./commands/${file}`);
             client.application.commands.create(com.getMetadata());
+            commands[com.name] = com;
         }
         
         for (file of eventFiles) {

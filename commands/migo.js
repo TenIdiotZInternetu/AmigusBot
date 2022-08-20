@@ -5,11 +5,11 @@ module.exports = {
     name: "migo",
     slash: true,
 
-    async create() {
-        APP.CommandManager.create({
+    getMetadata() {
+        return {
             name: "migo",
             description: "je kokot"
-        })
+        }
     },
 
     async execute(interaction) {
@@ -19,6 +19,7 @@ module.exports = {
             .setDescription('je kokot')
             .setColor('#f172fc');
 
-        interaction.editReply({embeds: [embed]});
+        interaction.editReply('.');
+        interaction.channel.send({embeds: [embed], ephemeral: false})
     }
 }

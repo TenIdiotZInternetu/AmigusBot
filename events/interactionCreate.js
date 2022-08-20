@@ -19,7 +19,6 @@ async function execute(interaction) {
 
 module.exports = {
     name: "interactionCreate",
-    description: "",
     once: false,
     execute: execute
 }

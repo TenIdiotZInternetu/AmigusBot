@@ -3,14 +3,15 @@ const { InstanceLimitError } = require('../errors.js');
 const APP = require('../index.js');
 const { newHofMessage } = require('../utils.js');
 const Mongo = require('../dbGlobals');
+const { getMetadata } = require('./requestrooms.js');
 
 
 module.exports = {
     name: "hof-create",
     slash: true,
 
-    async create() {
-        APP.CommandManager.create({
+    getMetadata() {
+        return {
             name: "hof-create",
             description: "[ADMIN ONLY] Creates #hall-of-fame channel with empty ranking slots",
             
@@ -20,7 +21,7 @@ module.exports = {
                 type: 'NUMBER',
                 required: false,
             }]
-        })
+        }
     },
 
     async execute(interaction) {

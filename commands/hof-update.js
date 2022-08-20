@@ -32,11 +32,11 @@ module.exports = {
     name: "hof-update",
     slash: true,
 
-    async create() {
-        APP.CommandManager.create({
+    getMetadata() {
+        return {
             name: "hof-update",
             description: "Updates the Hall of Fame with the most recent data"
-        })
+        }
     },
 
     async execute(interaction) {

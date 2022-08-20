@@ -30,7 +30,6 @@ function deleteSingleton(singletonDoc, field) {
  
 module.exports = {
     name: "channelDelete",
-    description: "A channel was deleted",
     once: false,
 
     async execute(channel) {
