@@ -1,6 +1,6 @@
 const Discord = require('discord.js');
 const APP = require('../index.js');
-const Utils = require('../utils.js');
+const { membersToArray } = require('../utils/memberFormatting.js');
 const Mongo = require('../dbGlobals');
 const {execute: AdminVerif} = require('../events/adminVerif.js')
 const { InvalidInputError } = require('../errors.js');
@@ -84,7 +84,7 @@ module.exports = {
         const bin = opts.getString("binary", false)
         const placement = opts.getNumber("placement", false);
 
-        const memberIds = Utils.membersToArray(members, interaction)
+        const memberIds = membersToArray(members, interaction)
 
         // Points Calculation --------------------------------------------------------------------------------------------------
         let pointsBin = '';

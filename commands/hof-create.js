@@ -1,9 +1,7 @@
 const Discord = require('discord.js');
 const { InstanceLimitError } = require('../errors.js');
 const APP = require('../index.js');
-const { newHofMessage } = require('../utils.js');
-const Mongo = require('../dbGlobals');
-const { getMetadata } = require('./requestrooms.js');
+const { newHofMessage } = require('../utils/hofUtils.js');
 
 
 module.exports = {

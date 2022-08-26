@@ -4,10 +4,15 @@ const Mongo = require('../dbGlobals');
 
 
 module.exports = {
-    name: "channelDelete",
+    name: "guildCreate",
     once: false,
 
-    async execute(channel) {
-        
+    async execute(guild) {
+        guildDb = APP.MongoClient.db(guild.name);
+
+        guildDb.createCollection('Singletons');
+        guildDb.createCollection('Channels');
+        guildDb.createCollection('HoF');
+        guildDb.createCollection('HoFMessages');
     }
 }

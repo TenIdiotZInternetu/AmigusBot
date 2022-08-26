@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const APP = require("../index.js");
+const {UnknownError} = require('../errors.js');
 
 module.exports = {
     name: "migo",
@@ -18,7 +19,7 @@ module.exports = {
             .setTitle('Migo')
             .setDescription('je kokot')
             .setColor('#f172fc');
-
+ 
         interaction.editReply('.');
         interaction.channel.send({embeds: [embed], ephemeral: false})
     }

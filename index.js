@@ -1,6 +1,6 @@
 const discord = require('discord.js');
 require('dotenv').config();
-require('./dbGlobals.js');
+const mongoDB = require('mongodb');
 const fs = require("fs");
 
 const intents = ['GUILDS', 'GUILD_MEMBERS', 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'GUILD_PRESENCES', 'GUILD_VOICE_STATES'];
@@ -8,6 +8,9 @@ const partials = ['GUIlD_MEMBER', 'MESSAGE', 'REACTION'];
 
 const commandFiles = fs.readdirSync("./commands/").filter(f => f.endsWith(".js"));
 const eventFiles = fs.readdirSync("./events/").filter(f => f.endsWith(".js"));
+
+const mongoClient = new mongoDB.MongoClient(process.env.MONGODB_URI);
+mongoClient.connect()
 
 const client = new discord.Client({intents: intents, partials: partials});
 client.login(process.env.TOKEN)
@@ -20,8 +23,9 @@ client.login(process.env.TOKEN)
         events = {}
 
         module.exports = {
-            Discord: discord,
             Client: client,
+            MongoClient: mongoClient,
+            MongoAdmin: mongoClient.db('Admin').admin(),
 
             commands: commands,
             events: events,

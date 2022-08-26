@@ -1,21 +1,23 @@
 const Discord = require('discord.js');
 const APP = require('../index.js');
 const Mongo = require('../dbGlobals');
+const { getGuildDb } = require('../utils/dbUtils.js');
 
 
 
-function deleteCategory(categoryDoc, guild) {
+async function deleteCategory(categoryDoc, guild) {
     categoryDoc.channels.forEach(childId => {
         guild.channels.fetch(childId)
             .then(child => child.delete())
             .catch(err => console.error(err));
     });
 
-    Mongo.CHANNELS.deleteOne({category: categoryDoc.category})
+    const channelsCol = await getGuildDb(guild, 'Channels')
+    channelsCol.deleteOne({category: categoryDoc.category})
 }
 
 
-function deleteSingleton(singletonDoc, field) {
+async function deleteSingleton(singletonDoc, field) {
     updateDoc = {'$unset': {}};
     updateDoc['$unset'][field] = '';
     filter = {};
@@ -33,10 +35,15 @@ module.exports = {
     once: false,
 
     async execute(channel) {
-        const categoryDoc = await Mongo.CHANNELS.findOne({category: channel.id});
-        const hofDoc = await Mongo.SINGLETONS.findOne({hofChannelId: channel.id});
-
-        if (categoryDoc) deleteCategory(categoryDoc, channel.guild);
-        if (hofDoc) deleteSingleton(hofDoc, 'hofChannelId');
+        getGuildDb(channel.guild, 'Channels')
+            .then(col => {
+                const doc = await col.findOne({category: channel.id})
+                if (doc) deleteCategory(categoryDoc, channel.guild);
+            })
+            
+        getGuildDb(channel.guild, 'Singletons').findOne({hofChannelId: channel.id})
+            .then(col => {
+                if (await col.findOne({category: channel.id})) deleteSingleton(hofDoc, 'hofChannelId');
+            })
     }
 }

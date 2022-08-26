@@ -1,6 +1,6 @@
 const Discord = require('discord.js');
 const APP = require('./index.js');
-const { Markdown } = require('./utils.js');
+const { Markdown } = require('./utils/Markdown.js');
 
 const errEmbedThumbnail = 'https://cdn.discordapp.com/attachments/742123756679331910/1005162710582956093/yikes.jpg';
 
@@ -19,6 +19,36 @@ class KnownError extends Error {
             .setColor(APP.WarningColor)
             .setTitle(this.title)
             .setDescription(this.description)
+    }
+}
+
+
+class UnknownError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = "UnknownError";
+        this.message = message;
+    }
+    
+    static alert(errEmbed, inter) {
+        errEmbed
+            .setColor(APP.ErrorColor)
+            .setTitle("An unknown error has occured")
+            .setDescription("Please contact **@TenIdiotZInternetu#8151**")
+    
+        APP.Client.users.fetch(process.env.TIZI_ID)
+            .then(tizi => tizi.send(Markdown(
+                `${this.name}: ${this.message} \n\
+                ${this.cause} \n\n\
+                StackTrace: \n\n\
+                ${this.stack} \n\
+                =============================================================== \n\n\
+                Encountered in ${inter.guild.name} (id: ${inter.guild.id}) \n\
+                Interaction ${inter.commandName} \n\
+                created by ${inter.user.username} (id: ${inter.user.id}) \n\
+                in the channel #${inter.channel.name} (id: ${inter.channelId}) \n\n\
+                ${inter.createdAt}`.replaceAll('                ', ''), 'c'
+            )))
     }
 }
 
@@ -70,6 +100,7 @@ class RequestDeniedError extends KnownError {
 
 
 module.exports = {
+    UnknownError,
     InstanceLimitError,
     DependencyMissingError,
     InvalidInputError,
@@ -79,32 +110,10 @@ module.exports = {
         const errEmbed = new Discord.MessageEmbed()
             .setThumbnail(errEmbedThumbnail)
         
-        if (!err.isKnown) unknownErrorHandler(errEmbed);
+        if (!err.isKnown) UnknownError.alert(errEmbed, inter);
         else err.createEmbed(errEmbed);
 
         inter.editReply({embeds: [errEmbed], ephemeral: true});
-
-
-        function unknownErrorHandler(errEmbed) {
-            errEmbed
-                .setColor(APP.ErrorColor)
-                .setTitle("An unknown error has occured")
-                .setDescription("Please contact **@TenIdiotZInternetu#8151**")
-        
-            APP.Client.users.fetch(process.env.TIZI_ID)
-                .then(tizi => tizi.send(Markdown(
-                    `${err.name}: ${err.message} \n\
-                    ${err.cause} \n\n\
-                    StackTrace: \n\n\
-                    ${err.stack} \n\
-                    =============================================================== \n\n\
-                    Encountered in ${inter.guild.name} (id: ${inter.guild.id}) \n\
-                    Interaction ${inter.commandName} \n\
-                    created by ${inter.user.username} (id: ${inter.user.id}) \n\
-                    in the channel #${inter.channel.name} (id: ${inter.channelId}) \n\n\
-                    ${inter.createdAt}`.replaceAll('                    ', ''), 'c'
-                )))
-        }
     },
 }
 

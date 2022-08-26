@@ -4,6 +4,7 @@ const Utils = require('../utils');
 const Mongo = require('../dbGlobals');
 const {execute: AdminVerif} = require('../events/adminVerif.js')
 const { InvalidInputError } = require('../errors.js');
+const { getGuildDb } = require('../utils');
 
 
 module.exports = {
@@ -108,7 +109,8 @@ module.exports = {
                 })
         }
  
-        Mongo.CHANNELS.insertOne({
+        const channelCol = await getGuildDb(interaction.guild, 'Channels')
+        channelCol.insertOne({
             category: category.id,
             categoryName: category.name,
             channels: catChannels,
