@@ -126,7 +126,9 @@ module.exports = {
             }
         }
  
-        const channelCol = await getGuildDb(interaction.guild, 'Channels')
+        const channelDb = await db(interaction.guild)
+        const channelCol = await channelDb.collection('Channels')
+
         channelCol.insertOne({
             category: category.id,
             categoryName: category.name,
