@@ -25,7 +25,7 @@ client.login(process.env.TOKEN)
         module.exports = {
             Client: client,
             MongoClient: mongoClient,
-            MongoAdmin: mongoClient.db('Admin').admin(),
+            MongoAdmin: mongoClient.db('Admin'). admin(),
 
             commands: commands,
             events: events,

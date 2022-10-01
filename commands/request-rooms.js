@@ -1,10 +1,15 @@
 const Discord = require('discord.js');
 const APP = require('../index.js');
-const Utils = require('../utils');
-const Mongo = require('../dbGlobals');
 const {execute: AdminVerif} = require('../events/adminVerif.js')
 const { InvalidInputError } = require('../errors.js');
-const { getGuildDb } = require('../utils');
+const { getGuildDb } = require('../utils/dbUtils.js');
+const { membersToArray } = require('../utils/memberFormatting')
+
+// Permission Calculator: https://discordapi.com/permissions.html#<bitfield>
+
+PERMS_NO_ACCESS = 0n
+PERMS_FULL_ACCESS = 1067365944896n
+PERMS_READ_ONLY = 66624n
 
 
 module.exports = {
@@ -24,6 +29,11 @@ module.exports = {
                     description: "Title abbreviation (max. 5 characters)",
                     type: 'STRING',
                     required: true,
+                },{
+                    name: "captain",
+                    description: "Member with access to announcements and links, use @",
+                    type: 'STRING',
+                    required: false,
                 },{
                     name: "members",
                     description: "Names of you and your teammates, use @",
@@ -47,14 +57,18 @@ module.exports = {
     async execute(interaction) {
         const tour = interaction.options.getString('title', true);
         const abr = interaction.options.getString('abr', true).toLowerCase();
+        const captain = interaction.options.getString('captain', false);
         const members = interaction.options.getString('members', false);
         const proofAtch = interaction.options.getAttachment('proof-image', false);
         const proofLink = interaction.options.getString('proof-link', false);
 
         if (abr.length > 5) throw new InvalidInputError("Please don't use more than 5 characters", 'abr', abr)
 
-        const memberIds = Utils.membersToArray(members, interaction);
+        let captainIds = membersToArray(captain, interaction)
+        const memberIds = membersToArray(members, interaction);
+
         if (!memberIds.length) throw new InvalidInputError("Please use @username format", 'members', members);
+        if (!captainIds.length) captainIds = [memberIds[0]]
         
         
         // Verification --------------------------------------------------------------------------------------------------------
@@ -95,18 +109,21 @@ module.exports = {
         for (const title of ["announcements", "links", "general", "scores", "lobbies", "voice"]) {
             let chanType, perms;
 
-            if (title == "announcements" || title == "links") perms = new Discord.Permissions(66624n);
-            else perms = new Discord.Permissions(1067365944896n);
+            if (title == "announcements" || title == "links") perms = new Discord.Permissions(PERMS_READ_ONLY);
+            else perms = new Discord.Permissions(PERMS_FULL_ACCESS);
 
             if (title == "voice") chanType = 'GUILD_VOICE';
             else chanType = 'GUILD_TEXT';
 
-            await interaction.guild.channels.create(`${abr}-${title}`, {parent: category, type: chanType})
-                .then(chan => {
-                    catChannels.push(chan.id);
-                    chan.permissionOverwrites.edit(newRole, perms.serialize());
-                    chan.permissionOverwrites.edit(interaction.guild.roles.everyone, new Discord.Permissions(0n).serialize());
-                })
+            let chan = await interaction.guild.channels.create(`${abr}-${title}`, {parent: category, type: chanType})
+            
+            catChannels.push(chan.id);
+            chan.permissionOverwrites.edit(newRole, perms.serialize());
+            chan.permissionOverwrites.edit(interaction.guild.roles.everyone, new Discord.Permissions(PERMS_NO_ACCESS).serialize());
+
+            for (const id of captainIds) {
+                chan.permissionOverwrites.edit(id, new Discord.Permissions(PERMS_FULL_ACCESS).serialize())
+            }
         }
  
         const channelCol = await getGuildDb(interaction.guild, 'Channels')

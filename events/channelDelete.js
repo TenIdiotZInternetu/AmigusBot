@@ -1,6 +1,5 @@
 const Discord = require('discord.js');
 const APP = require('../index.js');
-const Mongo = require('../dbGlobals');
 const { getGuildDb } = require('../utils/dbUtils.js');
 
 
@@ -36,14 +35,15 @@ module.exports = {
 
     async execute(channel) {
         getGuildDb(channel.guild, 'Channels')
-            .then(col => {
-                const doc = await col.findOne({category: channel.id})
-                if (doc) deleteCategory(categoryDoc, channel.guild);
+            .then(async col => {
+                const doc = await col.findOne({category: channel.id});
+                if (doc) deleteCategory(doc, channel.guild);
             })
             
-        getGuildDb(channel.guild, 'Singletons').findOne({hofChannelId: channel.id})
-            .then(col => {
-                if (await col.findOne({category: channel.id})) deleteSingleton(hofDoc, 'hofChannelId');
-            })
+        getGuildDb(channel.guild, 'Singletons')
+            .then(async col => {
+                const doc = await col.findOne({category: channel.id});
+                if (doc) deleteSingleton(doc, 'hofChannelId');
+            });
     }
 }

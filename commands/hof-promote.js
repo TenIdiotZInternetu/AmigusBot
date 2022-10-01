@@ -1,7 +1,6 @@
 const Discord = require('discord.js');
 const APP = require('../index.js');
 const { membersToArray } = require('../utils/memberFormatting.js');
-const Mongo = require('../dbGlobals');
 const {execute: AdminVerif} = require('../events/adminVerif.js')
 const { InvalidInputError } = require('../errors.js');
 
@@ -157,7 +156,7 @@ module.exports = {
         if (!verif) return;
 
         // Database Insert -----------------------------------------------------------------------------------------------------
-        const hofCol = Mongo.HOF;
+        
         const tourEntry = {
             title: tour,
             lastWonStage: lastStage,

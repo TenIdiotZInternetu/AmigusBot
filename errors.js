@@ -30,7 +30,7 @@ class UnknownError extends Error {
         this.message = message;
     }
     
-    static alert(errEmbed, inter) {
+    static alert(errEmbed, err, inter) {
         errEmbed
             .setColor(APP.ErrorColor)
             .setTitle("An unknown error has occured")
@@ -38,10 +38,10 @@ class UnknownError extends Error {
     
         APP.Client.users.fetch(process.env.TIZI_ID)
             .then(tizi => tizi.send(Markdown(
-                `${this.name}: ${this.message} \n\
-                ${this.cause} \n\n\
+                `${err.name}: ${err.message} \n\
+                ${err.cause} \n\n\
                 StackTrace: \n\n\
-                ${this.stack} \n\
+                ${err.stack} \n\
                 =============================================================== \n\n\
                 Encountered in ${inter.guild.name} (id: ${inter.guild.id}) \n\
                 Interaction ${inter.commandName} \n\
@@ -110,7 +110,7 @@ module.exports = {
         const errEmbed = new Discord.MessageEmbed()
             .setThumbnail(errEmbedThumbnail)
         
-        if (!err.isKnown) UnknownError.alert(errEmbed, inter);
+        if (!err.isKnown) UnknownError.alert(errEmbed, err, inter);
         else err.createEmbed(errEmbed);
 
         inter.editReply({embeds: [errEmbed], ephemeral: true});

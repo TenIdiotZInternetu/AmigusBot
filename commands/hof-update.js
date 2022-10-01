@@ -1,8 +1,9 @@
 const Discord = require('discord.js');
 const { InstanceLimitError, DependencyMissingError} = require('../errors.js');
 const APP = require('../index.js');
-const { newHofMessage, pointsToRole, membersIdsToString, Markdown: m } = require('../utils');
-const Mongo = require('../dbGlobals');
+const { pointsToRole, membersIdsToString } = require('../utils/memberFormatting.js');
+const { newHofMessage } = require('../utils/hofUtils.js');
+const { Markdown: m } = require('../utils/Markdown.js');
 
 
 function createFields(hofDoc) {
