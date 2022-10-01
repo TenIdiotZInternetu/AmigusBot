@@ -65,3 +65,8 @@ client.login(process.env.TOKEN)
         console.log('Amigus is online!');
     })
 
+
+
+
+
+    
