@@ -1,7 +1,6 @@
 const Discord = require('discord.js');
 const { InstanceLimitError } = require('../errors.js');
 const APP = require('../index.js');
-const { execute } = require('./requestrooms.js');
 
 
 module.exports = {
@@ -10,7 +9,7 @@ module.exports = {
 
     getMetadata() {
         return {
-            name: "hof-create",
+            name: "create-adminverif",
             description: "[ADMIN ONLY] Creates #amigus-verification channel",
         }
     },
