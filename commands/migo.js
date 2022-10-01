@@ -15,7 +15,7 @@ module.exports = {
 
     async execute(interaction) {
         const embed = new Discord.MessageEmbed()
-            .setImage(process.env.KOKOT_MIGO)
+            .setImage('https://media.discordapp.net/attachments/742124770040217651/957699743155388476/kokotmigo.gif')
             .setTitle('Migo')
             .setDescription('je kokot')
             .setColor('#f172fc');
